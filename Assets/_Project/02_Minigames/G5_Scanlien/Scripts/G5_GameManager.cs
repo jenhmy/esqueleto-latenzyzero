@@ -5,6 +5,7 @@ using UnityEngine.XR.Management;
 
 public class G5_GameManager : MonoBehaviour
 {
+    [Header("Configuración de Juego")]
     public int itemsParaGanar = 2;
     public TextMeshProUGUI textoPuntos;
     public GameObject panelVictoria;
@@ -14,62 +15,54 @@ public class G5_GameManager : MonoBehaviour
 
     private void Awake()
     {
-        // 1. Limpieza inmediata de cámaras huérfanas
+        // Limpieza rápida por si quedaron restos visuales del editor (Simulation)
         string[] intrusos = { "SimulationCamera", "XR Simulation Data" };
         foreach (string nombre in intrusos)
         {
             GameObject obj = GameObject.Find(nombre);
             if (obj != null) DestroyImmediate(obj);
         }
-
-        // 2. IMPORTANTE: No arranques los subsistemas aquí si el MainManager ya los paró.
-        // Deja que la Corrutina del Start se encargue de forma ordenada.
     }
 
     void Start()
     {
-        // Iniciamos la resurrección del motor XR con tiempo de respiro
+        // Iniciamos el motor XR (VR) de forma controlada
         StartCoroutine(ReactivarXR());
     }
 
     IEnumerator ReactivarXR()
     {
-        Debug.Log("G5: Iniciando protocolo de seguridad...");
+        Debug.Log("G5: Iniciando VR para Modo Historia...");
 
-        Resources.UnloadUnusedAssets();
-        System.GC.Collect();
-
+        // Un pequeño respiro igual que en G4
         yield return new WaitForSecondsRealtime(0.5f);
 
-        // --- MEJORA AQUÍ ---
-        // Si por lo que sea el motor XR se quedó a medias o "tonto", 
-        // forzamos una desinicialización limpia antes de intentar cargar el nuevo.
+        // Si el motor está "tonto" o inicializado a medias, lo limpiamos
         if (XRGeneralSettings.Instance.Manager.isInitializationComplete)
         {
             XRGeneralSettings.Instance.Manager.StopSubsystems();
             XRGeneralSettings.Instance.Manager.DeinitializeLoader();
-            yield return new WaitForSecondsRealtime(0.1f); // Un suspiro extra
+            yield return new WaitForSecondsRealtime(0.1f);
         }
-        // -------------------
 
+        // Cargamos el Loader de VR (PC o Móvil)
         if (XRGeneralSettings.Instance.Manager.activeLoader == null)
         {
-            Debug.Log("G5: Cargando Loader de VR...");
             yield return XRGeneralSettings.Instance.Manager.InitializeLoader();
         }
 
+        // Si todo ok, arrancamos subsistemas
         if (XRGeneralSettings.Instance.Manager.activeLoader != null)
         {
-            Debug.Log("G5: Activando Subsistemas VR.");
             XRGeneralSettings.Instance.Manager.StartSubsystems();
+            Debug.Log("G5: VR Activado.");
         }
         else
         {
-            Debug.LogError("G5: No se pudo iniciar el VR.");
+            Debug.LogError("G5: No se pudo iniciar el motor VR.");
         }
     }
 
-    // El resto de funciones (ItemRecogido, BotonVolver) se quedan igual
     public void ItemRecogido()
     {
         itemsActuales++;
@@ -78,8 +71,9 @@ public class G5_GameManager : MonoBehaviour
         if (textoPuntos != null)
             textoPuntos.text = "Puntos: " + puntosTotales;
 
-        MainManager main = Object.FindAnyObjectByType<MainManager>();
-        if (main != null) main.SumarPuntoTemporal(20);
+        // Usamos la instancia directa del MainManager que ya sabemos que existe
+        if (MainManager.Instance != null)
+            MainManager.Instance.SumarPuntoTemporal(20);
 
         if (itemsActuales >= itemsParaGanar)
         {
@@ -94,7 +88,7 @@ public class G5_GameManager : MonoBehaviour
 
     public void BotonVolver()
     {
-        MainManager main = Object.FindAnyObjectByType<MainManager>();
-        if (main != null) main.FinalizarEscenaActual();
+        if (MainManager.Instance != null)
+            MainManager.Instance.FinalizarEscenaActual();
     }
 }

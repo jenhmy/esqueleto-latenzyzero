@@ -168,7 +168,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &245398211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -617,7 +617,7 @@ Camera:
   m_GameObject: {fileID: 740436761}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
+  m_ClearFlags: 1
   m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -1501,6 +1501,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76a012492d3270444b01a28d3512f1c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::G3_GameManager
+  objetoARSession: {fileID: 245398210}
   itemsParaGanar: 2
   textoPuntos: {fileID: 1395767123}
   panelVictoria: {fileID: 1497586504}

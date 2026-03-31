@@ -61,12 +61,9 @@ public class MainManager : MonoBehaviour
         if (!mostrandoFinal)
         {
             string nivelACargar = flujoEscenas[pasoActual];
-
-            // --- YA NO NECESITAS EL IF (nivelACargar == "G5") AQUÍ ---
-            // Porque la escena Transition ya limpió todo antes de llamar a esta función.
-
-            mostrandoFinal = true;
             SceneManager.LoadScene(nivelACargar);
+            // Marcamos que lo siguiente es el texto final DESPUÉS de cargar el juego
+            mostrandoFinal = true;
         }
         else
         {
@@ -75,8 +72,6 @@ public class MainManager : MonoBehaviour
 
             if (pasoActual < flujoEscenas.Count)
             {
-                // Al cargar "Transition", el script TransitionController se activará
-                // y limpiará TODO (AR, VR, Memoria) automáticamente.
                 SceneManager.LoadScene("Transition");
             }
             else
@@ -92,8 +87,17 @@ public class MainManager : MonoBehaviour
     {
         ConfirmarPuntosYGuardar();
 
+        // ESTO ES CLAVE: Apagamos el motor ANTES de salir al menú o a la transición
+        if (XRGeneralSettings.Instance != null && XRGeneralSettings.Instance.Manager.isInitializationComplete)
+        {
+            XRGeneralSettings.Instance.Manager.StopSubsystems();
+            XRGeneralSettings.Instance.Manager.DeinitializeLoader();
+        }
+
         if (modoHistoriaActivo)
         {
+            // Al ir a la transición con el motor apagado, 
+            // el G4 o G5 podrán encenderlo desde cero y sin errores.
             SceneManager.LoadScene("Transition");
         }
         else

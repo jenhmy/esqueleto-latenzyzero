@@ -2,7 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.UI;
-using UnityEngine.XR.Management; // <--- AÑADE ESTO
+using UnityEngine.XR.Management;
 
 public class TransitionController : MonoBehaviour
 {
@@ -32,36 +32,17 @@ public class TransitionController : MonoBehaviour
 
     IEnumerator LimpiarYPasar()
     {
-        Debug.Log("Transición: Silenciando componentes de AR...");
+        Debug.Log("Transición: Limpiando memoria...");
 
-        // 1. DESACTIVACIÓN QUIRÚRGICA
-        // Buscamos todos los scripts activos
-        MonoBehaviour[] todosLosScripts = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
-
-        foreach (var script in todosLosScripts)
-        {
-            if (script == null) continue;
-
-            string ns = script.GetType().Namespace;
-            // Si el script es de AR Foundation, lo desactivamos a la fuerza
-            if (!string.IsNullOrEmpty(ns) && ns.Contains("UnityEngine.XR.ARFoundation"))
-            {
-                script.enabled = false;
-            }
-        }
-
-        // 2. APAGÓN DE MOTOR (Igual que antes)
-        if (XRGeneralSettings.Instance != null && XRGeneralSettings.Instance.Manager.isInitializationComplete)
-        {
-            XRGeneralSettings.Instance.Manager.StopSubsystems();
-            XRGeneralSettings.Instance.Manager.DeinitializeLoader();
-        }
-
-        // 3. LIMPIEZA DE MEMORIA
+        // Limpieza de basura de la escena anterior
         Resources.UnloadUnusedAssets();
         System.GC.Collect();
 
-        yield return new WaitForSeconds(3f);
-        MainManager.Instance.ContinuarHistoria();
+        yield return new WaitForSeconds(3f); // Tiempo para leer la historia
+
+        if (MainManager.Instance != null)
+        {
+            MainManager.Instance.ContinuarHistoria();
+        }
     }
 }
