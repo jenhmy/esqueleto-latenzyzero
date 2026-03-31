@@ -104,3 +104,6 @@ InitTestScene*.unity*
 *.unitypackage
 # Ignorar archivos de guardado locales si usas JSON o PlayerPrefs en disco
 /Saves/
+# Archivos específicos de VS y Logs de upgrade
+.vsconfig
+UpgradeLog.htm
