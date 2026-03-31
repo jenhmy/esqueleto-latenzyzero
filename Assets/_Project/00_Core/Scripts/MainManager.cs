@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using UnityEngine.XR.Management;
 
 public class MainManager : MonoBehaviour
 {
@@ -60,6 +61,10 @@ public class MainManager : MonoBehaviour
         if (!mostrandoFinal)
         {
             string nivelACargar = flujoEscenas[pasoActual];
+
+            // --- YA NO NECESITAS EL IF (nivelACargar == "G5") AQUÍ ---
+            // Porque la escena Transition ya limpió todo antes de llamar a esta función.
+
             mostrandoFinal = true;
             SceneManager.LoadScene(nivelACargar);
         }
@@ -70,6 +75,8 @@ public class MainManager : MonoBehaviour
 
             if (pasoActual < flujoEscenas.Count)
             {
+                // Al cargar "Transition", el script TransitionController se activará
+                // y limpiará TODO (AR, VR, Memoria) automáticamente.
                 SceneManager.LoadScene("Transition");
             }
             else
@@ -78,6 +85,8 @@ public class MainManager : MonoBehaviour
             }
         }
     }
+
+
 
     public void FinalizarEscenaActual()
     {
@@ -132,4 +141,6 @@ public class MainManager : MonoBehaviour
         }
         puntosEnEsteMinijuego = 0;
     }
+
+    
 }

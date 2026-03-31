@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.UI;
+using UnityEngine.XR.Management; // <--- AÑADE ESTO
 
 public class TransitionController : MonoBehaviour
 {
@@ -12,28 +13,55 @@ public class TransitionController : MonoBehaviour
     {
         if (MainManager.Instance != null)
         {
-            // Ponemos el texto que nos da el MainManager
             textoUI.text = MainManager.Instance.ObtenerTextoHistoria();
 
-            // Cambiamos el fondo
             Sprite fondoNuevo = MainManager.Instance.ObtenerFondoActual();
             if (fondoNuevo != null)
             {
                 imagenFondo.sprite = fondoNuevo;
             }
 
-            StartCoroutine(EsperarYPasar());
+            // Ejecutamos la limpieza nada más empezar la transición
+            StartCoroutine(LimpiarYPasar());
         }
         else
         {
-            Debug.LogWarning("¡Ojo! No hay MainManager en la escena. Asegúrate de empezar desde el Menú.");
+            Debug.LogWarning("No hay MainManager.");
         }
     }
 
-    IEnumerator EsperarYPasar()
+    IEnumerator LimpiarYPasar()
     {
+        Debug.Log("Transición: Silenciando componentes de AR...");
+
+        // 1. DESACTIVACIÓN QUIRÚRGICA
+        // Buscamos todos los scripts activos
+        MonoBehaviour[] todosLosScripts = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
+
+        foreach (var script in todosLosScripts)
+        {
+            if (script == null) continue;
+
+            string ns = script.GetType().Namespace;
+            // Si el script es de AR Foundation, lo desactivamos a la fuerza
+            if (!string.IsNullOrEmpty(ns) && ns.Contains("UnityEngine.XR.ARFoundation"))
+            {
+                script.enabled = false;
+            }
+        }
+
+        // 2. APAGÓN DE MOTOR (Igual que antes)
+        if (XRGeneralSettings.Instance != null && XRGeneralSettings.Instance.Manager.isInitializationComplete)
+        {
+            XRGeneralSettings.Instance.Manager.StopSubsystems();
+            XRGeneralSettings.Instance.Manager.DeinitializeLoader();
+        }
+
+        // 3. LIMPIEZA DE MEMORIA
+        Resources.UnloadUnusedAssets();
+        System.GC.Collect();
+
         yield return new WaitForSeconds(3f);
-        // Volvemos al MainManager para que nos mande a la siguiente escena
         MainManager.Instance.ContinuarHistoria();
     }
 }
