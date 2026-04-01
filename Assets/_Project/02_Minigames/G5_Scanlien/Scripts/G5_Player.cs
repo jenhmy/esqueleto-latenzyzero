@@ -1,23 +1,27 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class G5_Player : MonoBehaviour
 {
-    public float velocidad = 1.5f;
-    private InputManager input;
+    [Header("Ajustes")]
+    public float velocidad = 5f;
 
-    void Start()
+    private Vector2 direccionInput;
+
+    // Recibe el mensaje "Move"
+    private void OnMove(InputValue value)
     {
-        input = Object.FindAnyObjectByType<InputManager>();
+        direccionInput = value.Get<Vector2>();
     }
 
     void Update()
     {
-        if (input != null)
-        {
-            // Movimiento en X (izq/der) y Z (adelante/atrás)
-            // Usamos la rotación del XR Origin para que "adelante" sea hacia donde miras
-            Vector3 direccion = new Vector3(input.moveDirection.x, 0, input.moveDirection.y);
-            transform.Translate(direccion * velocidad * Time.deltaTime);
-        }
+        // Movimiento relativo al mundo:
+        // X = Izquierda/Derecha
+        // Z = Adelante/Atrás (input.y)
+        Vector3 movimiento = new Vector3(direccionInput.x, 0, direccionInput.y);
+
+        // Usamos position para mover la bola "físicamente" por el mundo
+        transform.position += movimiento * velocidad * Time.deltaTime;
     }
 }

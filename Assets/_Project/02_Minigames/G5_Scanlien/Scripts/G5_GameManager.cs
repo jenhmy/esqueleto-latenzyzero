@@ -2,6 +2,11 @@ using UnityEngine;
 using TMPro;
 using System.Collections;
 using UnityEngine.XR.Management;
+using UnityEngine.SceneManagement;
+
+// =========================================================================
+// >>> G5_GAMEMANAGER: Control del nivel VR y transición al final del juego
+// =========================================================================
 
 public class G5_GameManager : MonoBehaviour
 {
@@ -10,12 +15,16 @@ public class G5_GameManager : MonoBehaviour
     public TextMeshProUGUI textoPuntos;
     public GameObject panelVictoria;
 
+    [Header("Botones de Victoria (UI)")]
+    public GameObject botonContinuar; // El que lleva a la foto final
+    public GameObject botonSalir;     // El que vuelve al menú
+
     private int itemsActuales = 0;
-    private int puntosTotales = 0;
+    private int puntosTemporalesG5 = 0;
 
     private void Awake()
     {
-        // Limpieza rápida por si quedaron restos visuales del editor (Simulation)
+        // Limpieza de cámaras sobrantes del simulador XR
         string[] intrusos = { "SimulationCamera", "XR Simulation Data" };
         foreach (string nombre in intrusos)
         {
@@ -26,69 +35,83 @@ public class G5_GameManager : MonoBehaviour
 
     void Start()
     {
-        // Iniciamos el motor XR (VR) de forma controlada
+        // Al empezar el nivel, nos aseguramos de que el VR esté activo
         StartCoroutine(ReactivarXR());
+
+        // Escondemos el panel de victoria por si acaso
+        if (panelVictoria != null) panelVictoria.SetActive(false);
     }
 
     IEnumerator ReactivarXR()
     {
-        Debug.Log("G5: Iniciando VR para Modo Historia...");
-
-        // Un pequeño respiro igual que en G4
         yield return new WaitForSecondsRealtime(0.5f);
-
-        // Si el motor está "tonto" o inicializado a medias, lo limpiamos
-        if (XRGeneralSettings.Instance.Manager.isInitializationComplete)
-        {
-            XRGeneralSettings.Instance.Manager.StopSubsystems();
-            XRGeneralSettings.Instance.Manager.DeinitializeLoader();
-            yield return new WaitForSecondsRealtime(0.1f);
-        }
-
-        // Cargamos el Loader de VR (PC o Móvil)
         if (XRGeneralSettings.Instance.Manager.activeLoader == null)
         {
             yield return XRGeneralSettings.Instance.Manager.InitializeLoader();
         }
 
-        // Si todo ok, arrancamos subsistemas
         if (XRGeneralSettings.Instance.Manager.activeLoader != null)
         {
             XRGeneralSettings.Instance.Manager.StartSubsystems();
-            Debug.Log("G5: VR Activado.");
-        }
-        else
-        {
-            Debug.LogError("G5: No se pudo iniciar el motor VR.");
         }
     }
 
+    // Función que se llama cada vez que recoges algo en el G5
     public void ItemRecogido()
     {
         itemsActuales++;
-        puntosTotales += 20;
+        puntosTemporalesG5 += 20;
 
         if (textoPuntos != null)
-            textoPuntos.text = "Puntos: " + puntosTotales;
+            textoPuntos.text = "Puntos: " + puntosTemporalesG5;
 
-        // Usamos la instancia directa del MainManager que ya sabemos que existe
+        // Mandamos los puntos al MainManager para que se acumulen
         if (MainManager.Instance != null)
             MainManager.Instance.SumarPuntoTemporal(20);
 
+        // Si ya tenemos todos los items, ganamos
         if (itemsActuales >= itemsParaGanar)
         {
-            if (panelVictoria != null)
+            GanarMinijuego();
+        }
+    }
+
+    private void GanarMinijuego()
+    {
+        if (panelVictoria != null)
+        {
+            panelVictoria.SetActive(true);
+
+            // Liberamos el ratón para poder hacer clic en el menú
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+
+            if (MainManager.Instance != null)
             {
-                panelVictoria.SetActive(true);
-                Cursor.visible = true;
-                Cursor.lockState = CursorLockMode.None;
+                // LEEMOS SI ESTAMOS EN HISTORIA
+                bool esHistoria = MainManager.Instance.modoHistoriaActivo;
+
+                // LÓGICA DE BOTONES:
+                // El botón CONTINUAR solo se activa si es Modo Historia
+                if (botonContinuar != null)
+                    botonContinuar.SetActive(esHistoria);
+
+                // El botón SALIR se activa siempre (para volver al menú)
+                if (botonSalir != null)
+                    botonSalir.SetActive(true);
             }
         }
     }
 
-    public void BotonVolver()
+    // Esta función la conectaremos al botón "CONTINUAR" a través del UIMainManager
+    // (O directamente aquí si lo prefieres)
+    public void FinalizarNivel()
     {
         if (MainManager.Instance != null)
+        {
+            // Esta función del MainManager guarda puntos, apaga VR 
+            // y decide si ir a "Transition" o al menú de niveles.
             MainManager.Instance.FinalizarEscenaActual();
+        }
     }
 }

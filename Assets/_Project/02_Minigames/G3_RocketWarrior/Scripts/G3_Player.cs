@@ -1,30 +1,35 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class G3_Player : MonoBehaviour
 {
     public float velocidad = 5f;
-    private InputManager input;
-    private G1_GameManager gameManager;
+    private PlayerInput playerInput;
+    private G3_GameManager gameManager;
 
     void Start()
     {
-        input = Object.FindAnyObjectByType<InputManager>();
-        gameManager = Object.FindAnyObjectByType<G1_GameManager>();
+        // 1. Buscamos el componente EN el propio jugador
+        playerInput = GetComponent<PlayerInput>();
+        // 2. Buscamos al manager del G3
+        gameManager = Object.FindAnyObjectByType<G3_GameManager>();
     }
 
     void Update()
     {
-        Vector3 movimiento = new Vector3(input.moveDirection.x, input.moveDirection.y, 0);
+        if (playerInput == null) return;
+
+        Vector2 inputMovimiento = playerInput.actions["Move"].ReadValue<Vector2>();
+        Vector3 movimiento = new Vector3(inputMovimiento.x, inputMovimiento.y, 0);
         transform.position += movimiento * velocidad * Time.deltaTime;
     }
 
     private void OnTriggerEnter2D(Collider2D otro)
     {
-        // Si tocamos un Item, avisamos al GameManager del nivel
         if (otro.CompareTag("Item"))
         {
             Destroy(otro.gameObject);
-            gameManager.ItemRecogido();
+            if (gameManager != null) gameManager.ItemRecogido();
         }
     }
 }

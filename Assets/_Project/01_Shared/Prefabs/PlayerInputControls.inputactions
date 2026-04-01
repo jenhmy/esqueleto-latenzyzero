@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "name": "MainInputControls",
+    "name": "PlayerInputControls",
     "maps": [
         {
             "name": "Player",
@@ -32,6 +32,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Mirar_VR_PC",
+                    "type": "Value",
+                    "id": "8638ac0d-70e4-43fb-bfd1-394839b0ac9b",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
                 }
             ],
             "bindings": [
@@ -175,6 +184,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pausa",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e8c61a33-a70e-4f38-a3d0-5101eeb476f6",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Mirar_VR_PC",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3df47cad-ab5c-4d93-8c61-d41af602db65",
+                    "path": "<Touchscreen>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Mirar_VR_PC",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

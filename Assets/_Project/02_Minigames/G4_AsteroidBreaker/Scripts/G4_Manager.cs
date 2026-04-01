@@ -6,70 +6,46 @@ using UnityEngine.XR.Management;
 public class G4_GameManager : MonoBehaviour
 {
     [Header("Configuración AR")]
-    public GameObject objetoARSession;
+    public GameObject objetoARSession; // AR Session y AR Session Origin
 
     [Header("Configuración de Juego")]
     public int itemsParaGanar = 2;
     public TextMeshProUGUI textoPuntos;
     public GameObject panelVictoria;
 
+    [Header("Botones de Victoria")]
+    public GameObject botonContinuar;
+    public GameObject botonSalir;
+
     private int itemsActuales = 0;
     private int puntosTotales = 0;
 
-    private void Awake()
-    {
-        // --- NUEVA LIMPIEZA DE CÁMARAS FANTASMA ---
-        // Buscamos todas las cámaras para destruir las que no pertenecen a este nivel
-        Camera[] todasLasCamaras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-
-        foreach (Camera cam in todasLasCamaras)
-        {
-            // Si es la cámara de simulación o la cámara que viene de Transition, la borramos
-            if (cam.gameObject.name.Contains("Simulation") || (cam.gameObject.name == "Main Camera" && cam.transform.parent == null))
-            {
-                Debug.Log("G4: Destruyendo cámara intrusa: " + cam.gameObject.name);
-                Destroy(cam.gameObject);
-            }
-        }
-
-        // También borramos el entorno de simulación si existe para que no tape el mundo real
-        GameObject simEnv = GameObject.Find("Environment");
-        if (simEnv != null) Destroy(simEnv);
-    }
-
     void Start()
     {
-        if (objetoARSession != null)
-        {
-            objetoARSession.SetActive(false);
-            StartCoroutine(EncenderMotorAR());
-        }
+        if (objetoARSession != null) objetoARSession.SetActive(false);
+        StartCoroutine(ReactivarAR());
     }
 
-    IEnumerator EncenderMotorAR()
+    IEnumerator ReactivarAR()
     {
-        yield return new WaitForSecondsRealtime(1.0f);
-
-        if (XRGeneralSettings.Instance.Manager.activeLoader != null)
-        {
-            XRGeneralSettings.Instance.Manager.StopSubsystems();
-            XRGeneralSettings.Instance.Manager.DeinitializeLoader();
-            yield return new WaitForSecondsRealtime(0.2f);
-        }
-
-        yield return XRGeneralSettings.Instance.Manager.InitializeLoader();
-
+        Debug.Log("G4: Comprobando motor...");
+        // Intentamos arrancar los subsistemas
         if (XRGeneralSettings.Instance.Manager.activeLoader != null)
         {
             XRGeneralSettings.Instance.Manager.StartSubsystems();
-            yield return new WaitForSecondsRealtime(0.2f);
-
-            if (objetoARSession != null)
+        }
+        else
+        {
+            yield return XRGeneralSettings.Instance.Manager.InitializeLoader();
+            if (XRGeneralSettings.Instance.Manager.activeLoader != null)
             {
-                objetoARSession.SetActive(true);
-                Debug.Log("G4: AR Session activado correctamente.");
+                XRGeneralSettings.Instance.Manager.StartSubsystems();
             }
         }
+
+        yield return new WaitForSeconds(0.5f);
+        if (objetoARSession != null) objetoARSession.SetActive(true);
+        Debug.Log("G4: AR Re-activado con seguridad.");
     }
 
     public void ItemRecogido()
@@ -85,11 +61,28 @@ public class G4_GameManager : MonoBehaviour
 
         if (itemsActuales >= itemsParaGanar)
         {
-            if (panelVictoria != null) panelVictoria.SetActive(true);
+            GanarMinijuego();
         }
     }
 
-    public void BotonVolver()
+    private void GanarMinijuego()
+    {
+        if (panelVictoria != null)
+        {
+            panelVictoria.SetActive(true);
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+
+            if (MainManager.Instance != null)
+            {
+                bool modoHistoria = MainManager.Instance.modoHistoriaActivo;
+                if (botonContinuar != null) botonContinuar.SetActive(modoHistoria);
+                if (botonSalir != null) botonSalir.SetActive(true);
+            }
+        }
+    }
+
+    public void FinalizarNivel()
     {
         if (MainManager.Instance != null)
             MainManager.Instance.FinalizarEscenaActual();

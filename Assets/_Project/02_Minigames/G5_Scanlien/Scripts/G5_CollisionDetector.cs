@@ -2,14 +2,19 @@ using UnityEngine;
 
 public class G5_CollisionDetector : MonoBehaviour
 {
+    private G5_GameManager manager;
+
+    void Start()
+    {
+        manager = Object.FindAnyObjectByType<G5_GameManager>();
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Item"))
         {
-            // Desactivamos el collider para evitar el doble choque que nos pasaba antes
-            other.enabled = false;
+            other.enabled = false; // Bloqueamos el collider del item
 
-            G5_GameManager manager = Object.FindAnyObjectByType<G5_GameManager>();
             if (manager != null)
             {
                 manager.ItemRecogido();

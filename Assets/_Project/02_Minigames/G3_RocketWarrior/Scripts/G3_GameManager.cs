@@ -7,6 +7,10 @@ public class G3_GameManager : MonoBehaviour
     public TextMeshProUGUI textoUI;
     public GameObject panelVictoria;
 
+    [Header("Botones de Victoria")]
+    public GameObject botonContinuar;
+    public GameObject botonSalir;
+
     private int itemsActuales = 0;
     private int puntosTotales = 0;
 
@@ -20,7 +24,6 @@ public class G3_GameManager : MonoBehaviour
             textoUI.text = "Puntos: " + puntosTotales;
         }
 
-        // --- MEJORA: Usamos la instancia directa ---
         if (MainManager.Instance != null)
         {
             MainManager.Instance.SumarPuntoTemporal(5);
@@ -39,15 +42,22 @@ public class G3_GameManager : MonoBehaviour
             panelVictoria.SetActive(true);
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
+
+            // LÓGICA DE HISTORIA (Igual que en G1 y G2)
+            if (MainManager.Instance != null)
+            {
+                bool historia = MainManager.Instance.modoHistoriaActivo;
+                botonContinuar.SetActive(historia); // Solo sale si hay más niveles
+                botonSalir.SetActive(true);
+            }
         }
     }
 
-    public void BotonVolverAlSelector()
+    // Esta es la función que debes poner en el OnClick de tus botones de victoria
+    public void FinalizarNivel()
     {
-        // --- MEJORA: Usamos la instancia directa ---
         if (MainManager.Instance != null)
         {
-            // Esto decidirá si va a la siguiente Intro o al Menú
             MainManager.Instance.FinalizarEscenaActual();
         }
     }

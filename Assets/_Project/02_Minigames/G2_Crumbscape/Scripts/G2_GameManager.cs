@@ -7,6 +7,10 @@ public class G2_GameManager : MonoBehaviour
     public TextMeshProUGUI textoUI;
     public GameObject panelVictoria;
 
+    [Header("Botones de Victoria")]
+    public GameObject botonContinuar;
+    public GameObject botonSalir;
+
     private int itemsActuales = 0;
     private int puntosTotales = 0;
 
@@ -20,7 +24,6 @@ public class G2_GameManager : MonoBehaviour
             textoUI.text = "Puntos: " + puntosTotales;
         }
 
-        // --- MEJORA: Usamos la instancia directa ---
         if (MainManager.Instance != null)
         {
             MainManager.Instance.SumarPuntoTemporal(5);
@@ -39,16 +42,20 @@ public class G2_GameManager : MonoBehaviour
             panelVictoria.SetActive(true);
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
-        }
-    }
 
-    public void BotonVolverAlSelector()
-    {
-        // --- MEJORA: Usamos la instancia directa ---
-        if (MainManager.Instance != null)
-        {
-            // Esto decidirá si va a la siguiente Intro o al Menú
-            MainManager.Instance.FinalizarEscenaActual();
+            if (MainManager.Instance != null)
+            {
+                if (MainManager.Instance.modoHistoriaActivo)
+                {
+                    botonContinuar.SetActive(true);
+                    botonSalir.SetActive(true);
+                }
+                else
+                {
+                    botonContinuar.SetActive(false);
+                    botonSalir.SetActive(true);
+                }
+            }
         }
     }
 }
