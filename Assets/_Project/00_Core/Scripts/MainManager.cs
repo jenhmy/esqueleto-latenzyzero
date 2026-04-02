@@ -54,32 +54,53 @@ public class MainManager : MonoBehaviour
     }
 
     // ===============================================================================================
-    // MODO HISTORIA: GESTIÓN DE ESCENAS DE TRANSICIÓN (Intro -> Juego -> Final -> Siguiente Intro)
+    // MODO HISTORIA: GESTIÓN DE ESCENAS DE TRANSICIÓN (Intro -> Juego -> Final -> Siguiente Intro) 
     // ===============================================================================================
     public void ContinuarHistoria()
     {
-        // CASO A: Estamos en la INTRO (mostrandoFinal es false)
-        if (!mostrandoFinal)
-        {            
-            string nivelACargar = listaEscenasIniciales[indiceEscenasIniciales]; // 1. Busca el nombre del minijuego en la listaEscenasIniciales
-            SceneManager.LoadScene(nivelACargar); // 2. Carga ese minijuego            
-            mostrandoFinal = true; // 3. Cambia el bool para que lo próximo que veamos sea el texto final
-        }
-        else // CASO B: Estamos en el FINAL de un nivel (mostrandoFinal es true)
+        // Si el índice es 0 y acabamos de empezar (no estamos mostrando final), 
+        // forzamos la carga de la escena "Transition" para ver la primera Intro.
+        if (indiceEscenasIniciales == 0 && !mostrandoFinal && SceneManager.GetActiveScene().name != "Transition")
         {
-            indiceEscenasIniciales++; // 1. Pasamos al siguiente número de la lista
-            mostrandoFinal = false; // 2. Volvemos a poner el interruptor en "Intro" para el nuevo nivel
+            SceneManager.LoadScene("Transition");
+            return; // Salimos para que no ejecute lo de abajo
+        }
 
-            if (indiceEscenasIniciales < listaEscenasIniciales.Count) // 3. ¿Quedan más niveles en la lista?
+        // LOGICA DE FLUJO NORMAL: Si NO estamos mostrando el final, significa que toca CARGAR EL JUEGO
+        if (!mostrandoFinal)
+        {
+            // Cargamos el minijuego de la lista
+            SceneManager.LoadScene(listaEscenasIniciales[indiceEscenasIniciales]);
+            mostrandoFinal = true;
+        }
+        else // Si estamos mostrando el final, decidimos a dónde ir después
+        {
+            // ¿Hay un SIGUIENTE nivel después de este? 
+            if (indiceEscenasIniciales < listaEscenasIniciales.Count - 1)
             {
-                SceneManager.LoadScene("Transition"); // Sí: Vamos a la pantalla de transición para ver la intro del siguiente
+                indiceEscenasIniciales++;
+                mostrandoFinal = false;
+                SceneManager.LoadScene("Transition"); // Carga la Intro del siguiente
             }
-            else
+            else // SI ES EL ÚLTIMO NIVEL (G5)
             {
-                SceneManager.LoadScene("PuntuacionFinal"); // No: Hemos terminado la lista, vamos a la pantalla de puntos finales
+                // Si todavía estamos en la escena del juego, primero vamos a Transition (Visual Final)
+                if (SceneManager.GetActiveScene().name != "Transition")
+                {
+                    SceneManager.LoadScene("Transition");
+                }
+                else
+                {
+                    // Si ya estamos en la Transición y el tiempo ha terminado, vamos a la Puntuación Final.
+                    SceneManager.LoadScene("PuntuacionFinal");
+                }
             }
         }
     }
+
+    // =========================================================================
+    // MÉTODOS DE APOYO (UI)
+    // =========================================================================
 
     // Devuelve el TEXTO que se tiene que mostrar (escrito en el Inspector) mirando el indiceEscenasIniciales y mostrandoFinal true/false.
     public string ObtenerTextoHistoria()
@@ -117,6 +138,23 @@ public class MainManager : MonoBehaviour
         }
     }
 
+    // Gestión de cierre final
+    public void PrepararFinalDelJuego()
+    {
+        // 1. Nos aseguramos de que el índice sea el del último nivel (G5)
+        indiceEscenasIniciales = listaEscenasIniciales.Count - 1;
+
+        // 2. Marcamos que lo que viene ahora es el VISUAL FINAL
+        mostrandoFinal = true;
+
+        // 3. Guardamos puntos y limpiamos VR como siempre
+        ConfirmarPuntosYGuardar();
+        LimpiarHardwareYMemoria();
+
+        // 4. Cargamos la escena Transition para ver el último fondo/texto
+        SceneManager.LoadScene("Transition");
+    }
+
     // ===============================================================================================
     //                                 GESTIÓN DE PUNTOS
     // =============================================================================================== 
@@ -149,13 +187,34 @@ public class MainManager : MonoBehaviour
     // ===============================================================================================
 
     
-    public void VolverAlMenuSeleccion() // Esta función es para cuando se utiliza el Modo Selección 
+    public void VolverAlMenuSeleccion() // Esta función es para cuando se utiliza el Modo Selección en el botón volver
     {
         ResetearValores(); // Limpia todo el progreso antes de salir
         SceneManager.LoadScene("MenuSeleccionJuegos");
     }
 
-    public void VolverAlMainMenu() // Esta función es para cuando se utiliza el Modo Historia y se acaba
+    public void AbandonarPartida() // Para abandonar partidas (boton)
+    {
+        if (modoHistoriaActivo)
+        {
+            ResetearValores();
+            SceneManager.LoadScene("MainMenu"); // O la escena de mapa de historia
+        }
+        else
+        {
+            ResetearValores();
+            SceneManager.LoadScene("MenuSeleccionJuegos");
+        }
+    }
+
+    public void VolverAlMainMenu() // Para el Selector de juegos (boton)
+    {
+        ResetearValores();
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    // Para el botón final que sale en la escena de puntuación final
+    public void ResetTotal()
     {
         ResetearValores(); // Limpia todo el progreso antes de salir
         SceneManager.LoadScene("MainMenu");
@@ -182,7 +241,7 @@ public class MainManager : MonoBehaviour
             XRGeneralSettings.Instance.Manager.StopSubsystems();
 
             // -------------------------------------------------------------------------
-            // ADVERTENCIA: NO DESCOMENTAR 'DeinitializeLoader()'
+            // ADVERTENCIA :'DeinitializeLoader()'
             // -------------------------------------------------------------------------
             // XRGeneralSettings.Instance.Manager.DeinitializeLoader();
             // Si se desinicializa el Loader aquí, el motor tarda demasiado en cerrarse.

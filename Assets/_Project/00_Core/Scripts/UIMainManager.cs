@@ -1,41 +1,26 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI; // NECESARIO PARA CONTROLAR EL SLIDER
+using UnityEngine.UI;
 
-// =========================================================================
-// >>> UIMAINMANAGER: Control de navegación, pausa y configuración de audio
-// **Aquí van los botones compartidos, no los de minijuegos. Cada uno su propia UI por juego.** 
-// =========================================================================
+// ==============================================================================
+// >>> UIMAINMANAGER: Control de botones, pausa y configuración de audio
+// Este script actúa como "puente" entre la UI física y la lógica del MainManager.
+//
+// ** NOTA DE INTEGRACIÓN: Lo mantengo como prefab por seguridad. Mejor que cada uno
+// haga su propio UIManager para que este esté seguro.
+//
+// ** NOTA DE ESTRUCTURA: No está dentro de Global_SYSTEM de forma rígida porque 
+//    al ser un componente de UI, requiere referencias directas con objetos de la 
+//    escena local (botones, paneles). Mantenerlo externo evita que los eventos 
+//    'OnClick' se desconecten al cambiar de nivel.
+// ==============================================================================
+
+// ---------------------------------------------------------------------
+//                     ACCIONES DE AUDIO PARA FUTURO
+// ---------------------------------------------------------------------
 
 public class UIMainManager : MonoBehaviour
 {
-    [Header("Configuración de Audio (UI)")]
-    public Slider sliderMusica; // Arrastra aquí el Slider de tu menú de pausa
-
-    void Start()
-    {
-        // Al arrancar, si tenemos el slider y el manager de audio ya estaría
-        if (sliderMusica != null && AudioManager.Instance != null)
-        {
-            // Ponemos el slider en la misma posición que esté el volumen actual
-            sliderMusica.value = AudioManager.Instance.musicSource.volume;
-
-            // Escuchamos cuando el usuario mueve el slider para cambiar el volumen
-            sliderMusica.onValueChanged.AddListener(CambiarVolumenDesdeSlider);
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    //                     ACCIONES DE AUDIO 
-    // ---------------------------------------------------------------------
-
-    public void CambiarVolumenDesdeSlider(float valor)
-    {
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.musicSource.volume = valor;
-        }
-    }
 
     public void ReproducirSonidoBoton()
     {
@@ -47,52 +32,46 @@ public class UIMainManager : MonoBehaviour
     }
 
     // ---------------------------------------------------------------------
-    //                  PARA EL MENÚ PRINCIPAL 
+    //                 BOTONES PARA EL MENÚ PRINCIPAL 
     // ---------------------------------------------------------------------
 
-    public void Boton_IniciarHistoria()
+    
+    public void Boton_IniciarHistoria() // EN USO EN MAINMENU
     {
-        // 1. PRIMER TEST: ¿Llega el clic al script?
-        Debug.Log("<color=cyan>UIMainManager:</color> Se ha pulsado el botón de Historia");
 
         ReproducirSonidoBoton();
 
         if (MainManager.Instance != null)
         {
-            // 2. SEGUNDO TEST: ¿El MainManager existe?
-            Debug.Log("<color=green>MainManager detectado.</color> Iniciando secuencia...");
-
             MainManager.Instance.modoHistoriaActivo = true;
 
-            // Usamos ContinuarHistoria para que el cerebro decida qué escena toca
+            // Usamos ContinuarHistoria para que el MainManager decida qué escena toca
             MainManager.Instance.ContinuarHistoria();
         }
         else
         {
-            // 3. TERCER TEST: Error crítico de referencia
             Debug.LogError("<color=red>Error:</color> No se encuentra el MainManager en la escena.");
         }
     }
 
-    public void Boton_IrASeleccionNiveles()
+    public void Boton_IrASeleccionNiveles() // EN USO EN MAINMENU
     {
         ReproducirSonidoBoton();
         if (MainManager.Instance != null) MainManager.Instance.modoHistoriaActivo = false;
         SceneManager.LoadScene("MenuSeleccionJuegos");
     }
 
-    public void Boton_SalirDelJuego()
+    public void Boton_SalirDelJuego() // EN USO EN MAINMENU
     {
         ReproducirSonidoBoton();
-        Debug.Log("Cerrando el juego...");
         Application.Quit();
     }
 
     // ---------------------------------------------------------------------
-    //                  PARA EL SELECTOR DE NIVELES 
+    //                  PARA EL SELECTOR DE JUEGOS 
     // ---------------------------------------------------------------------
 
-    public void CargarNivelSuelto(string nombreEscena)
+    public void CargarNivelSuelto(string nombreEscena) // EN USO EN SLECTOR DE JUEGOS
     {
         ReproducirSonidoBoton();
         if (MainManager.Instance != null)
@@ -102,61 +81,74 @@ public class UIMainManager : MonoBehaviour
         SceneManager.LoadScene(nombreEscena);
     }
 
-    public void Boton_JugarG1() => CargarNivelSuelto("G1_Inicial");
-    public void Boton_JugarG2() => CargarNivelSuelto("G2_Inicial");
-    public void Boton_JugarG3() => CargarNivelSuelto("G3_Inicial");
-    public void Boton_JugarG4() => CargarNivelSuelto("G4_Inicial");
-    public void Boton_JugarG5() => CargarNivelSuelto("G5_Inicial");
+    public void Boton_JugarG1() => CargarNivelSuelto("G1_Inicial"); // EN USO EN SELECTOR DE JUEGOS G1
+    public void Boton_JugarG2() => CargarNivelSuelto("G2_Inicial"); // EN USO EN SELECTOR DE JUEGOS G2
+    public void Boton_JugarG3() => CargarNivelSuelto("G3_Inicial"); // EN USO EN SELECTOR DE JUEGOS G3
+    public void Boton_JugarG4() => CargarNivelSuelto("G4_Inicial"); // EN USO EN SELECTOR DE JUEGOS G4
+    public void Boton_JugarG5() => CargarNivelSuelto("G5_Inicial"); // EN USO EN SELECTOR DE JUEGOS G5
+
+
 
     // ---------------------------------------------------------------------
     //                     VOLVER ATRÁS Y CIERRE
     // ---------------------------------------------------------------------
 
-    public void Boton_VolverAlMainMenu()
+    public void Boton_AbandonarPartida() // EN USO EN CADA MINIJUEGO AL FINAL - VOLVER
     {
         ReproducirSonidoBoton();
-        SceneManager.LoadScene("MainMenu");
+
+        if (MainManager.Instance != null)
+        {
+
+            MainManager.Instance.AbandonarPartida();
+        }
+        else
+        {
+            // Por si acaso falla el Manager
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 
+    public void Boton_VolverAlMainMenu() // EN USO EN SELECTOR DE JUEGOS
+    {
+        ReproducirSonidoBoton();
+
+        if (MainManager.Instance != null)
+        {
+            MainManager.Instance.VolverAlMainMenu();
+        }
+        else
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
+    }
+
+    // EN USO BOTÓN DE SIGUIENTE DE LOS NIVELES G1, G2, G3 y G4 EN MODO HISTORIA
+    public void Boton_SiguienteNormal()
+    {
+        ReproducirSonidoBoton();
+        if (MainManager.Instance != null) MainManager.Instance.FinalizarEscenaActual();
+    }
+
+    // EN USO BOTÓN DE SIGUIENTE SOLO DEL NIVEL G5 EN MODO HISTORIA
+    public void Boton_SiguienteFinal()
+    {
+        ReproducirSonidoBoton();
+        if (MainManager.Instance != null)
+        {
+            // Esta función ya la tienes en tu MainManager, solo la llamamos
+            MainManager.Instance.PrepararFinalDelJuego();
+        }
+    }
+    // EN USO BOTÓN DE VOLVER DE ESCENA PUNTUACIÓNFINAL: Para cuando se acaba el modo historia y sale la puntuación.
     public void Boton_ResetTotal()
     {
         ReproducirSonidoBoton();
         if (MainManager.Instance != null)
         {
-            MainManager.Instance.VolverAlMainMenu();
+            MainManager.Instance.ResetTotal();
         }
     }
 
-    public void Boton_AbandonarPartida()
-    {
-        ReproducirSonidoBoton();
-        if (MainManager.Instance != null)
-        {
-            MainManager.Instance.VolverAlMenuSeleccion();
-        }
-    }
-
-    public void Boton_FinalDelJuego()
-    {
-        ReproducirSonidoBoton();
-        if (MainManager.Instance != null)
-        {
-            MainManager.Instance.FinalizarEscenaActual();
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    //                      CONTROL DE FLUJO (HISTORIA)
-    // ---------------------------------------------------------------------
-
-    public void Boton_ContinuarHistoria()
-    {
-        ReproducirSonidoBoton();
-
-        if (MainManager.Instance != null)
-        {
-            MainManager.Instance.ContinuarHistoria();
-        }
-    }
 
 }

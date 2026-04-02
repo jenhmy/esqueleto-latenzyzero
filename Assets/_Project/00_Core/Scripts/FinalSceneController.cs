@@ -15,7 +15,7 @@ public class FinalSceneController : MonoBehaviour
         // Al arrancar, le pedimos los puntos al MainManager
         if (MainManager.Instance != null)
         {
-            // Pintamos el resultado final
+            // Mostramos el resultado final
             textoPuntos.text = "PUNTUACIÓN TOTAL: " + MainManager.Instance.puntosTotalesVisualizar;
         }
 
